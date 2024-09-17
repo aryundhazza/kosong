@@ -10,18 +10,37 @@
     "test": "npx cypress verify & cypress run --component"
   },
   "dependencies": {
-    "next": "14.0.4",
+    "@reduxjs/toolkit": "^2.2.7",
+    "@types/chart.js": "^2.9.41",
+    "chart.js": "^2.9.4",
+    "cross-env": "^7.0.3",
+    "formik": "^2.4.6",
+    "lucide-react": "^0.441.0",
+    "next": "^14.2.11",
+    "quill": "^2.0.2",
     "react": "^18",
+    "react-chartjs-2": "^5.2.0",
     "react-dom": "^18",
-    "cross-env": "^7.0.3"
+    "react-quill": "^2.0.0",
+    "react-redux": "^9.1.2",
+    "react-share": "^5.1.0",
+    "react-toastify": "^10.0.5",
+    "redux-persist": "^6.0.0",
+    "usehooks-ts": "^3.1.0",
+    "yup": "^1.4.0"
   },
   "devDependencies": {
-    "@types/node": "^20",
+    "@types/lodash.debounce": "^4.0.9",
+    "@types/node": "^20.16.5",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "@types/redux-persist": "^4.3.1",
+    "autoprefixer": "^10.4.20",
     "cypress": "^13.6.2",
     "eslint": "^8",
     "eslint-config-next": "14.0.4",
+    "postcss": "^8.4.45",
+    "tailwindcss": "^3.4.11",
     "typescript": "^5"
   }
 }

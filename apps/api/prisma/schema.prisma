@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,12 +7,105 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Sample {
+enum Role {
+  User
+  Organizer
+}
+
+enum Category {
+  Klasik
+  Jazz
+  Blues
+  Reggae
+  Rap
+  Pop
+  Dangdut
+}
+
+model User {
+  id            Int            @id @default(autoincrement())
+  avatar        String?
+  name          String
+  email         String         @unique
+  password      String
+  role          Role           @default(User)
+  isVerify      Boolean        @default(false)
+  referralCode  String?        @unique
+  referredBy    String?
+  saldo         Int            @default(0)
+  events        Event[]        @relation("EventOrganizer")
+  registrations Registration[]
+  reviews       Review[]
+  pointsExpiry  DateTime?
+  pointLogs     PointLog[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+model Event {
+  id             Int            @id @default(autoincrement())
+  name           String
+  slug           String
+  category       Category
+  price          Int            @default(0)
+  dateTime       DateTime
+  location       String
+  description    String         @db.LongText
+  image          String
+  seatsAvailable Int            @default(0)
+  ticketTypes    String?
+  organizerId    Int
+  organizer      User           @relation("EventOrganizer", fields: [organizerId], references: [id])
+  promotions     Promotion[]
+  registrations  Registration[]
+  reviews        Review[]
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+}
+
+model Promotion {
+  id         Int      @id @default(autoincrement())
+  eventId    Int
+  discount   Int
+  usageLimit Int
+  startDate  DateTime
+  endDate    DateTime
+  event      Event    @relation(fields: [eventId], references: [id])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Registration {
+  id               Int      @id @default(autoincrement())
+  userId           Int
+  eventId          Int
+  registrationDate DateTime @default(now())
+  ticketPrice      Int // Harga tiket setelah diskon
+  totalTicket      Int
+  user             User     @relation(fields: [userId], references: [id])
+  event            Event    @relation(fields: [eventId], references: [id])
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model Review {
   id        Int      @id @default(autoincrement())
-  name      String
-  code      String   @unique
+  userId    Int
+  eventId   Int
+  rating    Int // Rating dari 1 sampai 5
+  comment   String
+  user      User     @relation(fields: [userId], references: [id])
+  event     Event    @relation(fields: [eventId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
 
-  @@map("samples") // if you want to use snake_case format
+model PointLog {
+  id              Int      @id @default(autoincrement())
+  userId          Int
+  points          Int
+  transactionType String // Misalnya "Referral", "Redemption"
+  user            User     @relation(fields: [userId], references: [id])
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
