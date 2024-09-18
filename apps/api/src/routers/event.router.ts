@@ -20,12 +20,6 @@ export class EventRouter {
       verifyToken,
       this.eventController.createEvent,
     );
-    this.router.post(
-      '/updateEvent',
-      uploader('event-', '/event').single('image'),
-      verifyToken,
-      this.eventController.updateEvent,
-    );
     this.router.get('/events', this.eventController.getEvents);
     this.router.get('/myevents', this.eventController.getMyEvents);
     this.router.get('/events/:slug', this.eventController.getEventSlug);

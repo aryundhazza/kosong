@@ -1,6 +1,5 @@
 'use client';
 
-import LoginPage from '@/app/login/page';
 import FieldText from '@/components/form/fieldText';
 import { getToken, getUserId } from '@/lib/server';
 import { depositUser } from '@/lib/user';

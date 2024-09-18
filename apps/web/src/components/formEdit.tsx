@@ -1,8 +1,8 @@
 'use client';
 import { Formik, Field, Form, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
-import { getToken } from '@/lib/server'; // Adjust path if necessary
-import { updateEvent } from '@/lib/event'; // Adjust path if necessary
+import { getToken } from '@/lib/server';
+import { updateEvent } from '@/lib/event';
 
 interface EventFormProps {
   event: {
@@ -18,9 +18,6 @@ interface EventFormProps {
     dateTime: string;
     image: string;
     slug: string;
-    // organizer: {
-    //   name: string;
-    // };
   };
 }
 
@@ -42,20 +39,15 @@ const FormEdit: React.FC<EventFormProps> = ({ event }) => {
       const token = await getToken();
       const formData = new FormData();
 
-      // Append each field individually
       Object.keys(values).forEach((key) => {
         formData.append(key, values[key]);
       });
 
-      // Append dateTime with ISO format separately if needed
       formData.append('dateTime', new Date(values.dateTime).toISOString());
 
-      // Log FormData contents
       for (const pair of formData.entries()) {
-        console.log(`${pair[0]}: ${pair[1]}`);
       }
 
-      // Call updateEvent API
       const { result, ok } = await updateEvent(formData, token as string);
 
       if (!ok) throw new Error(result.msg);
@@ -70,7 +62,7 @@ const FormEdit: React.FC<EventFormProps> = ({ event }) => {
 
   const formatDateForDateTimeLocal = (date: Date): string => {
     const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are zero-based
+    const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     const hours = String(date.getHours()).padStart(2, '0');
     const minutes = String(date.getMinutes()).padStart(2, '0');

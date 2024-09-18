@@ -6,18 +6,18 @@ import { getToken, getUserId } from '@/lib/server';
 
 interface BuyButtonProps {
   eventId: number;
-  //   userId: number;
 }
 
-const BuyButton: React.FC<BuyButtonProps> = ({ eventId }) => {
-  const [totalTicket, setTotalTicket] = useState('');
+export const BuyButton: React.FC<BuyButtonProps> = ({ eventId }) => {
+  const [totalTicket, setTotalTicket] = useState<number | ''>('');
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setTotalTicket(e.target.value);
+    const value = e.target.value;
+    setTotalTicket(value === '' ? '' : Number(value));
   };
 
   const handleBuy = async () => {
-    if (Number(totalTicket) <= 0) {
+    if (totalTicket === '' || totalTicket <= 0) {
       toast.error('Please enter a valid number of tickets.');
       return;
     }
@@ -26,19 +26,28 @@ const BuyButton: React.FC<BuyButtonProps> = ({ eventId }) => {
       const token = await getToken();
       const userId = await getUserId();
 
+      if (!token) {
+        throw new Error('Authentication token is missing.');
+      }
+      if (typeof userId !== 'number') {
+        throw new Error('User ID is not valid.');
+      }
+
       const input = {
         eventId,
-        userId: Number(userId),
-        totalTicket: Number(totalTicket),
+        userId,
+        totalTicket,
       };
+
       const { result, ok } = await buyTicket(input, token);
-      if (!ok) throw result.msg;
+      if (!ok) throw new Error(result.msg);
       toast.success(result.msg);
-      // Optionally, handle post-purchase actions (e.g., redirect, clear form)
     } catch (error) {
-      console.log(error);
-      //   toast.error('An error occurred while buying the ticket.');
-      toast.error(error as string);
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : 'An error occurred while buying the ticket.';
+      toast.error(errorMessage);
     }
   };
 
@@ -46,7 +55,7 @@ const BuyButton: React.FC<BuyButtonProps> = ({ eventId }) => {
     <div className="mt-4">
       <input
         type="number"
-        value={totalTicket}
+        value={totalTicket === '' ? '' : totalTicket}
         onChange={handleChange}
         className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
         placeholder="Enter number of tickets"

@@ -26,7 +26,7 @@ export const Carousel: React.FC<CarouselProps> = ({ images }) => {
   };
 
   useEffect(() => {
-    const interval = setInterval(goToNext, 5000); // Change slide every 5 seconds
+    const interval = setInterval(goToNext, 3000);
     return () => clearInterval(interval);
   }, []);
 

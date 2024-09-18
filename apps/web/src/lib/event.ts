@@ -33,7 +33,6 @@ export const updateEvent = async (formData: FormData, token: string) => {
     },
   });
 
-  console.log(res, 'res');
   const result = await res.json();
   return { result, ok: res.ok };
 };
@@ -100,18 +99,23 @@ export const getEventSlug = async (slug: string) => {
   return { result, event: result.events, ok: res.ok };
 };
 
-export const buyTicket = async (data: IUserBuy | null, token?: string) => {
-  const res = await fetch(`${base_url}/buy`, {
-    method: 'POST',
-    body: JSON.stringify(data),
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-  });
+export const buyTicket = async (data: IUserBuy | null, token: string) => {
+  try {
+    const res = await fetch(`${base_url}/buy`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
 
-  const result = await res.json();
-  return { result, ok: res.ok };
+    const result = await res.json();
+    return { result, ok: res.ok };
+  } catch (error) {
+    console.error('Error buying ticket:', error);
+    return { result: null, ok: false };
+  }
 };
 
 export const postComment = async (data: IUserReview | null, token?: string) => {

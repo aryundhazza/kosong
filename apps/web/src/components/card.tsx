@@ -60,9 +60,6 @@ export const CardEvent: React.FC<ICardEvent> = ({
             {data.name}
           </h6>
           <p className="text-slate-600 leading-normal font-light max-w-100px">
-            {/* The place is close to Barceloneta Beach and bus stop just 2 min by
-            walk and near to &quot;Naviglio&quot; where you can enjoy the main
-            night life in Barcelona. */}
             {data.description.replace(/(<([^>]+)>)/gi, '')}
           </p>
         </div>

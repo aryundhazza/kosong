@@ -46,7 +46,6 @@ export default function DashboardPage() {
             <PesertaPage />
           </div>
         )}
-        {/* You can add additional conditions and styling for other options */}
       </div>
     </div>
   );

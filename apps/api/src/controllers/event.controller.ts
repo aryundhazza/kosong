@@ -36,6 +36,7 @@ export class EventController {
           organizerId: organizerId,
         },
       });
+
       res.status(201).send({
         status: 'ok',
         msg: 'event created !',
@@ -71,6 +72,7 @@ export class EventController {
           msg: 'Invalid page number',
         });
       }
+
       if (isNaN(pageSizeNumber) || pageSizeNumber <= 0) {
         return res.status(400).send({
           status: 'error',
@@ -81,7 +83,7 @@ export class EventController {
       let filter: Prisma.EventWhereInput = {};
 
       if (search) {
-        filter.name = { contains: search as string }; // Case-insensitive search
+        filter.name = { contains: search as string };
       }
 
       if (category && category !== 'all') {
@@ -95,11 +97,10 @@ export class EventController {
         }
       }
 
-      // Add organizerId filter if provided
       if (organizerId) {
         const organizerIdNumber = parseInt(organizerId as string, 10);
         if (!isNaN(organizerIdNumber)) {
-          filter.organizerId = organizerIdNumber; // Assuming organizerId is a number
+          filter.organizerId = organizerIdNumber;
         } else {
           return res.status(400).send({
             status: 'error',
@@ -108,7 +109,6 @@ export class EventController {
         }
       }
 
-      // Fetch paginated events
       const [events, totalCount] = await Promise.all([
         prisma.event.findMany({
           where: filter,
@@ -132,21 +132,18 @@ export class EventController {
     } catch (err) {
       res.status(400).send({
         status: 'error',
-        msg: err instanceof Error ? err.message : 'An error occurred',
+        msg: err,
       });
     }
   }
 
   async getEvents(req: Request, res: Response) {
     try {
-      // Retrieve query parameters
       const { search, page = 1, pageSize = 10, category } = req.query;
 
-      // Convert page and pageSize to numbers
       const pageNumber = parseInt(page as string, 10);
       const pageSizeNumber = parseInt(pageSize as string, 10);
 
-      // Validate pagination parameters
       if (isNaN(pageNumber) || pageNumber <= 0) {
         return res.status(400).send({
           status: 'error',
@@ -160,13 +157,11 @@ export class EventController {
         });
       }
 
-      // Define the filter for search
       let filter: Prisma.EventWhereInput = {};
       if (search) {
         filter.name = { contains: search as string };
       }
       if (category && category !== 'all') {
-        // Ensure category is a valid enum value
         try {
           filter.category = category as Category;
         } catch (error) {
@@ -177,7 +172,6 @@ export class EventController {
         }
       }
 
-      // Fetch paginated events
       const [events, totalCount] = await Promise.all([
         prisma.event.findMany({
           where: filter,
@@ -188,7 +182,6 @@ export class EventController {
         prisma.event.count({ where: filter }),
       ]);
 
-      // Send the response
       res.status(200).send({
         status: 'ok',
         events,
@@ -202,7 +195,7 @@ export class EventController {
     } catch (err) {
       res.status(400).send({
         status: 'error',
-        msg: err || 'An error occurred',
+        msg: err,
       });
     }
   }
@@ -229,13 +222,12 @@ export class EventController {
   async buyTicket(req: Request, res: Response) {
     try {
       const { eventId, totalTicket, userId } = req.body;
-      // Mulai transaksi
+
       const result = await prisma.$transaction(async (prisma) => {
         const user = await prisma.user.findUnique({
           where: { id: +userId },
         });
 
-        // Cek ketersediaan tiket
         const event = await prisma.event.findUnique({
           where: { id: eventId },
         });
@@ -252,10 +244,6 @@ export class EventController {
           price = event.price * totalTicket;
         }
 
-        if (user && user.points > 0) {
-          price = price - user.points;
-        }
-
         let ticketAvail = event.seatsAvailable;
         let ticketSesudahDipesan = ticketAvail - totalTicket;
 
@@ -270,17 +258,16 @@ export class EventController {
           saldo = user.saldo - price;
         }
 
-        // Tandai tiket sebagai dibeli
         await prisma.event.update({
           where: { id: eventId },
           data: { seatsAvailable: ticketSesudahDipesan },
         });
-        // update pembeli
+
         await prisma.user.update({
           where: { id: userId },
           data: { saldo: saldo },
         });
-        // update penyelenggara
+
         if (organizer) {
           await prisma.user.update({
             where: { id: organizer?.id },
@@ -297,15 +284,16 @@ export class EventController {
           },
         });
 
-        // Anda bisa menambahkan logika tambahan di sini jika perlu
-
         res.status(200).send({
           status: 'ok',
-          msg: 'Pembelian Ticket Berhasil!',
+          msg: 'Ticket Purchase Successful!',
         });
       });
-    } catch (error) {
-      console.error('Transaction failed:', error);
+    } catch (err) {
+      res.status(400).send({
+        status: 'error',
+        msg: 'user not found!',
+      });
     }
   }
 
@@ -323,7 +311,7 @@ export class EventController {
       });
       res.status(201).send({
         status: 'ok',
-        msg: 'Review Berhasil ditambahkan !',
+        msg: 'Review Successfully added!',
         review,
       });
     } catch (err) {
@@ -338,7 +326,6 @@ export class EventController {
     try {
       const { id } = req.params;
 
-      // Ensure that the eventId is valid
       if (!id) {
         return res.status(400).send({
           status: 'error',
@@ -347,7 +334,6 @@ export class EventController {
       }
 
       let fixReviews: any[] = [];
-      // Retrieve reviews from the database
       let reviews = await prisma.review.findMany({
         where: { eventId: +id },
         include: { user: true },
@@ -356,11 +342,9 @@ export class EventController {
       res.status(200).send({
         status: 'ok',
         msg: 'Reviews retrieved successfully!',
-        reviews, // Changed from review to reviews to match the pluralized nature of `findMany`
+        reviews,
       });
     } catch (err) {
-      // Send an error response
-      console.error(err); // Log the error for debugging purposes
       res.status(500).send({
         status: 'error',
         msg: 'An unexpected error occurred',

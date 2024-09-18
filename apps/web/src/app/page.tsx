@@ -13,9 +13,6 @@ const Home: NextPage = () => {
           <Carousel images={carouselImages.map((image) => image.src)} />
           <ListEventsPage />
         </div>
-        {/* <div className="flex justify-start w-full overflow-auto"> */}
-        {/* <ListEventsPage /> */}
-        {/* </div> */}
       </div>
     </Wrapper>
   );

@@ -12,23 +12,23 @@ export class UserController {
     try {
       const { name, email, password, role = 'User', referredBy } = req.body;
 
-      const existhingUser = await prisma.user.findUnique({
-        where: { email: email },
+      const existingUser = await prisma.user.findUnique({
+        where: { email },
       });
-
-      if (existhingUser) throw 'email has been used!';
+      if (existingUser)
+        return res.status(400).send({
+          status: 'error',
+          msg: 'Email has been used!',
+        });
 
       const salt = await genSalt(10);
       const hashPassword = await hash(password, salt);
 
-      function generateReferralCode(length = 8) {
+      function generateReferralCode(length = 8): string {
         const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-        let referralCode = '';
-        for (let i = 0; i < length; i++) {
-          const randomIndex = Math.floor(Math.random() * characters.length);
-          referralCode += characters[randomIndex];
-        }
-        return referralCode;
+        return Array.from({ length }, () =>
+          characters.charAt(Math.floor(Math.random() * characters.length)),
+        ).join('');
       }
 
       const referralCode = generateReferralCode();
@@ -53,7 +53,7 @@ export class UserController {
             data: {
               userId: referrer.id,
               points: 10000,
-              transactionType: 'Refferal',
+              transactionType: 'Referral',
             },
           });
         }
@@ -67,20 +67,6 @@ export class UserController {
         });
       }
 
-      // OLAH REFERALL
-      // const userReadyReferal = await prisma.user.findUnique({
-      //   where: { referralCode: referredBy },
-      // });
-
-      // if (userReadyReferal) {
-      //   const userId = userReadyReferal.id;
-      //   const points = 10000;
-      //   const transactionType = 'Referral';
-      //   const pointLog = await prisma.pointLog.create({
-      //     data: { userId, points, transactionType },
-      //   });
-      // }
-
       const payload = { id: newUser.id };
       const token = sign(payload, process.env.SECRET_JWT!, {
         expiresIn: '15m',
@@ -91,6 +77,7 @@ export class UserController {
         '../templates',
         'verification.hbs',
       );
+
       const templateSource = fs.readFileSync(templatePath, 'utf-8');
       const compiledTemplate = handlebars.compile(templateSource);
       const html = compiledTemplate({
@@ -102,7 +89,7 @@ export class UserController {
         from: process.env.MAIL_USER,
         to: newUser.email,
         subject: 'Welcome to the Web Application',
-        html: html,
+        html,
       });
 
       res.status(201).send({
@@ -111,9 +98,9 @@ export class UserController {
         user: newUser,
       });
     } catch (err) {
-      res.status(400).send({
+      res.status(500).send({
         status: 'error',
-        msg: err,
+        msg: 'Internal server error',
       });
     }
   }
@@ -122,30 +109,42 @@ export class UserController {
     try {
       const { email, password } = req.body;
 
-      const existhingUser = await prisma.user.findUnique({
-        where: { email: email },
+      const existingUser = await prisma.user.findUnique({
+        where: { email },
       });
+      if (!existingUser)
+        return res.status(400).send({
+          status: 'error',
+          msg: 'User not found!',
+        });
 
-      if (!existhingUser) throw 'user not found!';
-      if (!existhingUser.isVerify) throw 'user not verify!';
+      if (!existingUser.isVerify)
+        return res.status(400).send({
+          status: 'error',
+          msg: 'User not verified!',
+        });
 
-      const isValidPass = await compare(password, existhingUser.password);
+      const isValidPass = await compare(password, existingUser.password);
+      if (!isValidPass)
+        return res.status(400).send({
+          status: 'error',
+          msg: 'Incorrect password!',
+        });
 
-      if (!isValidPass) throw 'incorrect password!';
-
-      const payload = { id: existhingUser.id, role: existhingUser.role };
+      const payload = { id: existingUser.id, role: existingUser.role };
       const token = sign(payload, process.env.SECRET_JWT!, { expiresIn: '1d' });
 
       res.status(200).send({
         status: 'ok',
-        msg: 'login succes!',
+        msg: 'Login successful!',
         token,
-        user: existhingUser,
+        user: existingUser,
       });
     } catch (err) {
-      res.status(400).send({
+      console.error('Error logging in user:', err);
+      res.status(500).send({
         status: 'error',
-        msg: err,
+        msg: 'Internal server error',
       });
     }
   }
@@ -156,7 +155,14 @@ export class UserController {
         where: { id: req.user?.id },
       });
 
-      if (user?.isVerify) throw 'invalid link';
+      if (!user)
+        return res.status(400).send({ status: 'error', msg: 'Invalid link' });
+
+      if (user.isVerify)
+        return res.status(400).send({
+          status: 'error',
+          msg: 'User already verified',
+        });
 
       await prisma.user.update({
         data: { isVerify: true },
@@ -165,12 +171,12 @@ export class UserController {
 
       res.status(200).send({
         status: 'ok',
-        msg: 'succes verify user!',
+        msg: 'User verified successfully!',
       });
     } catch (err) {
-      res.status(400).send({
+      res.status(500).send({
         status: 'error',
-        msg: err,
+        msg: 'Internal server error',
       });
     }
   }
@@ -183,9 +189,9 @@ export class UserController {
         users,
       });
     } catch (err) {
-      res.status(400).send({
+      res.status(500).send({
         status: 'error',
-        msg: err,
+        msg: 'Internal server error',
       });
     }
   }
@@ -195,62 +201,73 @@ export class UserController {
       const user = await prisma.user.findUnique({
         where: { id: +req.params.id },
       });
-      if (!user) throw 'author not found!';
+
+      if (!user)
+        return res.status(404).send({
+          status: 'error',
+          msg: 'User not found!',
+        });
+
       res.status(200).send({
         status: 'ok',
         user,
       });
     } catch (err) {
-      res.status(400).send({
+      console.error('Error retrieving user by ID:', err);
+      res.status(500).send({
         status: 'error',
-        msg: err,
+        msg: 'Internal server error',
       });
     }
   }
 
   async deposit(req: Request, res: Response) {
     try {
-      console.log(req.body, '>>>>????');
       const { saldo } = req.body;
       const { id } = req.params;
+
       const user = await prisma.user.update({
-        data: { saldo },
+        data: { saldo: { increment: saldo } },
         where: { id: +id },
       });
+
       res.status(200).send({
-        status: 'Success Deposit',
+        status: 'Success',
+        msg: 'Deposit successful',
         user,
       });
     } catch (err) {
-      res.status(400).send({
+      res.status(500).send({
         status: 'error',
-        msg: err,
+        msg: 'Internal server error',
       });
     }
   }
 
   async editAvatar(req: Request, res: Response) {
     try {
-      console.log(req.body);
-      let { name, email, avatar } = JSON.parse(req.body.data);
-      // if (!req.file) throw "no file uploaded"
-      if (typeof avatar == 'object') {
-        avatar = `http://localhost:8000/api/public/avatar/${req?.file?.filename}`;
-      }
+      const { name, email, avatar } = JSON.parse(req.body.data);
+
+      if (!req.file) throw new Error('No file uploaded');
+
+      const avatarUrl =
+        typeof avatar === 'object'
+          ? `http://localhost:8000/api/public/avatar/${req.file.filename}`
+          : avatar;
 
       await prisma.user.update({
-        data: { avatar: avatar, name, email },
+        data: { avatar: avatarUrl, name, email },
         where: { id: req.user?.id },
       });
 
       res.status(200).send({
         status: 'ok',
-        msg: 'edit Update success!',
+        msg: 'Avatar updated successfully!',
       });
     } catch (err) {
-      res.status(400).send({
+      res.status(500).send({
         status: 'error',
-        msg: err,
+        msg: 'Internal server error',
       });
     }
   }

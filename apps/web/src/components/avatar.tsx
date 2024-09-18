@@ -60,19 +60,6 @@ export default function AvatarComp() {
           className="flex gap-2 cursor-pointer"
           onClick={() => router.push('/profile')}
         >
-          {/* <div className="w-6 h-6 rounded-full overflow-hidden">
-            <img
-              src={
-                'https://media.istockphoto.com/id/1018739074/vector/power-turn-off-icon-vector-illustration.jpg?s=612x612&w=0&k=20&c=VbwdvU0oVPP2vPDqLod2AWi5Gws6QwALYzZ6bV0oYSc='
-              }
-              alt={user.name}
-              className="w-full h-full object-cover"
-            />
-          </div> */}
-          {/* <div>
-            <div>{user.name}</div>
-            <div className="text-[14px]">{user.email}</div>
-          </div> */}
           {/* <!-- Profile dropdown --> */}
           <div className="relative ml-3">
             <div>
